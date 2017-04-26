@@ -74,6 +74,7 @@ class IslandoraScanBatch extends IslandoraBatchPreprocessor {
     foreach ($directory_contents as $uri => $value) {
       $files[substr($uri, $target_length)] = $value;
     }
+    ksort($files, SORT_STRING);
     return $files;
   }
 
