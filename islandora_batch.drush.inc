@@ -94,13 +94,13 @@ function islandora_batch_drush_command() {
   // it requires manual argument parsing.
   if (DRUSH_VERSION >= 7) {
     $items['islandora_batch_scan_preprocess']['options']['scan_target'] = array(
-      'description' => 'The target to directory or zip file to scan.',
+      'description' => 'The target to directory or zip file to scan. Requires the full path to your archive from root directory. e.g. /var/www/drupal/sites/archive.zip',
       'required' => TRUE,
     );
   }
   else {
     $items['islandora_batch_scan_preprocess']['options']['target'] = array(
-      'description' => 'The target to directory or zip file to scan.',
+      'description' => 'The target to directory or zip file to scan. Requires the full path to your archive from root directory. e.g. /var/www/drupal/sites/archive.zip',
       'required' => TRUE,
     );
   }
@@ -130,6 +130,25 @@ function drush_islandora_batch_scan_preprocess_validate() {
   $encoding_check = islandora_batch_scan_check_encoding(drupal_strtolower(drush_get_option('type')), drush_get_option('zip_encoding'));
   if ($encoding_check !== NULL) {
     drush_set_error('INVALID ENCODING', $encoding_check);
+  }
+
+  $path = drush_get_option('scan_target') ? drush_get_option('scan_target') : drush_get_option('target');
+  $target_checks = islandora_batch_scan_check_target(drupal_strtolower(drush_get_option('type')), $path);
+  if (count($target_checks)) {
+    foreach ($target_checks as $target_check) {
+      drush_set_error($target_check['error'], NULL, $target_check['label']);
+    }
+  }
+
+  $cmodels = explode(',', drush_get_option('content_models'));
+  foreach ($cmodels as $cmodel) {
+    if (!islandora_object_load($cmodel)) {
+      drush_set_error('INVALID CONTENT MODEL', NULL, dt('"!cmodel" is not a valid content model. ', array('!cmodel' => $cmodel)));
+    }
+  }
+  $parent = drush_get_option('parent');
+  if (!islandora_object_load($parent)) {
+    drush_set_error('INVALID PARENT', NULL, dt('"!parent" does not exist or is not accessible. ', array('!parent' => $parent)));
   }
 }
 
